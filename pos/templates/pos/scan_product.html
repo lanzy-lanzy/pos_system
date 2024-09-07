@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row g-4">
+        <!-- Scan Product Section -->
+        <div class="col-lg-4 col-md-5">
+            <div class="card shadow-sm h-100 border-0 rounded-lg">
+                <div class="card-body">
+                    <h2 class="card-title mb-4 text-primary">
+                        <i class="fas fa-barcode me-2"></i>Scan Product
+                    </h2>
+                    <form id="scan-form">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            <input type="text" id="barcode-input" name="barcode" class="form-control form-control-lg" placeholder="Scan barcode" autofocus>
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                <i class="fas fa-plus me-1"></i>Add
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Cart Section -->
+        <div class="col-lg-8 col-md-7">
+            <div class="card shadow-sm h-100 border-0 rounded-lg">
+                <div class="card-body">
+                    <h2 class="card-title mb-4 text-primary">
+                        <i class="fas fa-shopping-cart me-2"></i>Cart
+                    </h2>
+                    <div class="table-responsive">
+                        <table id="cart-table" class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Price</th>
+                                    <th>Quantity</th>
+                                    <th>Subtotal</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart_items %}
+                                <tr data-product-id="{{ item.product.id }}">
+                                    <td class="align-middle">
+                                        <strong>{{ item.product.name }}</strong>
+                                        <small class="text-muted d-block">SKU: {{ item.product.barcode }}</small>
+                                    </td>
+                                    <td class="align-middle">₱{{ item.product.price }}</td>
+                                    <td class="align-middle">
+                                        <div class="input-group input-group-sm">
+                                            <button class="btn btn-outline-secondary decrease-quantity" type="button">-</button>
+                                            <input type="number" class="form-control text-center quantity-input" value="{{ item.quantity }}" min="1" style="max-width: 60px;">
+                                            <button class="btn btn-outline-secondary increase-quantity" type="button">+</button>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle subtotal">₱{{ item.subtotal }}</td>
+                                    <td class="align-middle">
+                                        <button class="btn btn-sm btn-outline-danger delete-item">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Total and Checkout -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <h3 class="fw-bold mb-0">Total: ₱<span id="total">{{ total }}</span></h3>
+                        <button id="checkout-btn" class="btn btn-success btn-lg">
+                            <i class="fas fa-cash-register me-2"></i>Proceed to Checkout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Modal for Payment -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Scan QR Code for Payment</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="qr-code" src="" alt="QR Code" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle form submission for barcode scanning
+document.getElementById('scan-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const barcode = document.getElementById('barcode-input').value;
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `barcode=${barcode}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Product not found');
+        }
+    });
+});
+
+// Update cart item quantity
+function updateCartItem(productId, quantity) {
+    fetch('{% url "update_cart_item" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `product_id=${productId}&quantity=${quantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update the subtotal and total without reloading the page
+            const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+            const priceCell = row.querySelector('td:nth-child(2)');
+            const subtotalCell = row.querySelector('.subtotal');
+            const price = parseFloat(priceCell.textContent.replace('₱', ''));
+            const newSubtotal = price * quantity;
+            subtotalCell.textContent = `₱${newSubtotal.toFixed(2)}`;
+            updateTotal();
+        } else {
+            alert('Error updating cart item');
+        }
+    });
+}
+
+// Delete cart item
+function deleteCartItem(productId) {
+    fetch('{% url "delete_cart_item" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `product_id=${productId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const row = document.querySelector(`tr[data-product-id="${productId}"]`);
+            row.remove();
+            updateTotal();
+        } else {
+            alert('Error deleting cart item');
+        }
+    });
+}
+
+// Add this function to update the total
+function updateTotal() {
+    const subtotals = document.querySelectorAll('.subtotal');
+    let total = 0;
+    subtotals.forEach(subtotal => {
+        total += parseFloat(subtotal.textContent.replace('₱', ''));
+    });
+    document.getElementById('total').textContent = total.toFixed(2);
+}
+
+// Update the event listeners for quantity changes
+document.querySelectorAll('.quantity-input').forEach(input => {
+    input.addEventListener('change', function() {
+        const productId = this.closest('tr').dataset.productId;
+        const quantity = parseInt(this.value);
+        updateCartItem(productId, quantity);
+    });
+});
+
+document.querySelectorAll('.decrease-quantity, .increase-quantity').forEach(button => {
+    button.addEventListener('click', function() {
+        const input = this.classList.contains('decrease-quantity') ? this.nextElementSibling : this.previousElementSibling;
+        const productId = this.closest('tr').dataset.productId;
+        let quantity = parseInt(input.value);
+      
+        if (this.classList.contains('decrease-quantity') && quantity > 1) {
+            quantity--;
+        } else if (this.classList.contains('increase-quantity')) {
+            quantity++;
+        }
+      
+        input.value = quantity;
+        updateCartItem(productId, quantity);
+    });
+});
+
+function clearCart() {
+    document.querySelector('#cart-table tbody').innerHTML = '';
+    document.getElementById('total').textContent = '0.00';
+}
+
+document.getElementById('checkout-btn').addEventListener('click', function() {
+    if (document.querySelector('#cart-table tbody').children.length === 0) {
+        alert('Your cart is empty. Please add items before checking out.');
+        return;
+    }
+
+    fetch('{% url "checkout" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('qr-code').src = data.qr_image;
+            new bootstrap.Modal(document.getElementById('qrModal')).show();
+            clearCart(); // Clear the cart after successful checkout
+        } else {
+            alert(data.error || 'Error generating QR code');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during checkout. Please try again.');
+    });
+});
+
+// Add this to the existing script tag
+document.querySelectorAll('.delete-item').forEach(button => {
+    button.addEventListener('click', function() {
+        const productId = this.closest('tr').dataset.productId;
+        const productName = this.closest('tr').querySelector('td:first-child strong').textContent;
+        if (confirm(`Are you sure you want to remove ${productName} from your cart?`)) {
+            deleteCartItem(productId);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+}
+
+#header {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.module h2, .module caption, .inline-group h2 {
+    background: var(--secondary-color);
+}
+
+div.breadcrumbs {
+    background: var(--secondary-color);
+}
+
+a:link, a:visited {
+    color: var(--primary-color);
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: var(--primary-color);
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+    background: var(--secondary-color);
+}
+
+#changelist-filter h2 {
+    background: var(--primary-color);
+}
+
+.selector-chosen h2 {
+    background: var(--secondary-color) !important;
+}

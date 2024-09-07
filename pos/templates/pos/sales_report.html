@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block content %}
+<td>₱{{ sale.total_sales|floatformat:2|intcomma }}</td>
+<td>{{ sale.transactions_count|intcomma }}</td>
+<div class="container">
+    <h1 class="mb-4">Sales Report</h1>
+    
+    <div class="mb-4">
+        <a href="{% url 'generate_sales_report_pdf' %}" class="btn btn-primary" target="_blank">
+            <i class="fas fa-file-pdf me-2"></i>Generate PDF Report
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Daily Sales</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="dailySalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Top Selling Products</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="topProductsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Detailed Sales Data</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Total Sales</th>
+                                <th>Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in daily_sales %}
+                            <tr>
+                                <td>{{ sale.date|date:"Y-m-d" }}</td>
+                                <td>₱{{ sale.total_sales|floatformat:2|intcomma }}</td>
+                                <td>{{ sale.transactions_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">Monthly Sales Summary</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Total Sales</th>
+                                <th>Transactions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sale in monthly_sales %}
+                            <tr>
+                                <td>{{ sale.month|date:"F Y" }}</td>
+                                <td>₱{{ sale.total_sales|floatformat:2|intcomma }}</td>
+                                <td>{{ sale.transactions_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Daily Sales Chart
+    var dailySalesCtx = document.getElementById('dailySalesChart').getContext('2d');
+    var dailySalesChart = new Chart(dailySalesCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for sale in daily_sales %}'{{ sale.date|date:"Y-m-d" }}',{% endfor %}],
+            datasets: [{
+                label: 'Daily Sales',
+                data: [{% for sale in daily_sales %}{{ sale.total_sales|intcomma }},{% endfor %}],
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Top Products Chart
+    var topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    var topProductsChart = new Chart(topProductsCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for product in top_products %}'{{ product.product__name }}',{% endfor %}],
+            datasets: [{
+                label: 'Quantity Sold',
+                data: [{% for product in top_products %}{{ product.total_quantity|intcomma }},{% endfor %}],                backgroundColor: 'rgba(255, 99, 132, 0.8)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

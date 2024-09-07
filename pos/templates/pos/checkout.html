@@ -1,0 +1,29 @@
+{% extends 'pos/base.html' %}
+
+{% block content %}
+<h2>Checkout</h2>
+<div id="receipt">
+    <h3>Transaction ID: {{ transaction.transaction_id }}</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in transaction.items.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p>Total: ${{ transaction.total_amount }}</p>
+    <img src="data:image/png;base64,{{ qr_image }}" alt="Payment QR Code">
+</div>
+<button id="print-receipt" class="btn btn-primary">Print Receipt</button>
+{% endblock %}
