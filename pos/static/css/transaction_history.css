@@ -1,0 +1,42 @@
+.transaction-table {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.transaction-table thead {
+    background-color: #3498db;
+    color: white;
+}
+
+.transaction-table th, .transaction-table td {
+    padding: 12px 15px;
+}
+
+.transaction-row {
+    transition: background-color 0.3s ease;
+}
+
+.transaction-row:hover {
+    background-color: #f8f9fa;
+}
+
+.btn-reprint {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.pagination .page-link {
+    color: #3498db;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: #f8f9fa;
+}

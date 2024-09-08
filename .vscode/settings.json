@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "D:\\djangoproject\\pos_system\\env\\Scripts\\python.exe",
+    "python.terminal.activateEnvironment": true,
+    "terminal.integrated.profiles.windows": {
+        "PowerShell": {
+            "source": "PowerShell",
+            "args": ["-NoExit", "-Command", "& 'D:\\djangoproject\\pos_system\\env\\Scripts\\Activate.ps1'"]
+        }
+    },
+    "terminal.integrated.defaultProfile.windows": "PowerShell"
+}
