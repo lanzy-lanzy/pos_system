@@ -45,3 +45,45 @@
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+/* Receipt Style for 58mm */
+.receipt {
+    width: 58mm;
+    padding: 10px;
+    border: 1px solid #000;
+}
+
+.receipt-header, .receipt-footer {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.receipt-header h2 {
+    font-size: 12px;
+    margin: 0;
+}
+
+.receipt-section {
+    margin-bottom: 10px;
+}
+
+.receipt-section table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.receipt-section table th,
+.receipt-section table td {
+    padding: 5px 0;
+    text-align: left;
+}
+
+.receipt-total {
+    font-weight: bold;
+}
+
+.receipt-footer {
+    border-top: 1px dashed #000;
+    padding-top: 5px;
+    font-size: 8px;
+}

@@ -59,25 +59,21 @@ def checkout(request):
             product = get_object_or_404(Product, id=item['id'])
             TransactionItem.objects.create(transaction=transaction, product=product, quantity=item['quantity'], price=item['price'])
 
-        # Generate QR Code
-        qr = qrcode.QRCode(version=1, box_size=10, border=5)
-        qr.add_data(str(transaction.transaction_id))
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        qr_image = base64.b64encode(buffer.getvalue()).decode()
+        # Instead of generating QR code, use the static image
+        qr_image_path = '/static/img/qrcode.png'
 
         request.session['cart'] = []
 
         return JsonResponse({
             'success': True,
-            'qr_image': f"data:image/png;base64,{qr_image}",
-            'transaction_id': str(transaction.transaction_id)
+            'qr_image': qr_image_path,
+            'transaction_id': str(transaction.transaction_id),
+            'total': total,
+            'items': [{'name': get_object_or_404(Product, id=item['id']).name, 'quantity': item['quantity'], 'price': item['price']} for item in cart]
         })
 
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Transaction
@@ -205,7 +201,7 @@ def get_transaction_details(request):
     
     items = [
         {
-            'name': item.product.name,
+            'name': item.product.name.capitalize(),
             'price': str(item.price),
             'quantity': item.quantity
         }
