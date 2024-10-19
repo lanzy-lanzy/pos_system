@@ -8,6 +8,8 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from django.db.models import Sum, Count, F, Avg
 from django.db.models.functions import TruncDate, TruncMonth
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import PermissionDenied
 from io import BytesIO
 from .models import Product, Transaction, TransactionItem
 import qrcode
@@ -22,13 +24,20 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
-from django.contrib.admin.views.decorators import staff_member_required
 
 logger = logging.getLogger(__name__)
 
+# Decorators
 def admin_required(view_func):
     decorated_view_func = login_required(staff_member_required(view_func))
     return decorated_view_func
+
+def check_admin_session(view_func):
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated or not request.user.is_staff:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 # Cart Views
 def view_cart(request):
@@ -73,11 +82,6 @@ def checkout(request):
         })
 
     return JsonResponse({'success': False, 'error': 'Invalid request method'})
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from .models import Transaction
-import json
 
 @csrf_exempt
 def process_payment(request):
@@ -181,11 +185,6 @@ def delete_transaction(request, transaction_id):
     transaction.delete()
     return JsonResponse({'success': True})
 
-from django.http import JsonResponse
-from .models import Transaction
-from django.shortcuts import get_object_or_404
-from uuid import UUID
-
 def get_transaction_details(request):
     transaction_id = request.GET.get('transaction_id')
     
@@ -271,15 +270,6 @@ def generate_sales_report_pdf(request):
     response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
     response.write(pdf)
     return response
-
-from django.core.exceptions import PermissionDenied
-
-def check_admin_session(view_func):
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.is_staff:
-            raise PermissionDenied
-        return view_func(request, *args, **kwargs)
-    return wrapper
 
 # @check_admin_session
 # def admin_only_view(request):

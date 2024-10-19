@@ -36,11 +36,11 @@
                         </a>
                     </li>
                     {% if user.is_authenticated %}
-                    <li class="nav-item">
+                    {% comment %} <li class="nav-item">
                         <a class="nav-link" href="{% url 'process_payment' %}">
                             <i class="fas fa-credit-card me-1"></i>Process Payment
                         </a>
-                      </li>
+                      </li> {% endcomment %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'transaction_history' %}">
                                 <i class="fas fa-history me-1"></i>Transaction History
